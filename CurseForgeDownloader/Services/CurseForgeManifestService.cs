@@ -42,8 +42,40 @@ namespace CurseForgeDownloader.Services
 
             await ExtractMods(currentManifest, Path.Combine(packPath, "mods"));
             if (!currentManifest.FromZip) return;
+                        
+            ExtractConfigs(currentManifest.FilePath, packPath);
+        }
 
-            //TODO: Extract config files from Zip
+        /// <summary>
+        /// Extract configs from Modpack zip
+        /// </summary>
+        /// <param name="zipPath">Path to the Modpack zip</param>
+        /// <param name="packPath">Output path</param>
+        private void ExtractConfigs(string zipPath, string packPath)
+        {
+            using var zipFile = File.OpenRead(zipPath);
+            using var archive = new ZipArchive(zipFile, ZipArchiveMode.Read);
+            //get all folders
+            var folders = archive.Entries.Where(x => string.IsNullOrWhiteSpace(x.Name));
+            //get all files except manifest and modlist
+            var files = archive.Entries.Where(x => !string.IsNullOrWhiteSpace(x.Name) && x.Name != "manifest.json" && x.Name != "modlist.html");
+
+            //create folders
+            foreach (var folder in folders)
+            {
+                var path = folder.FullName.Remove(0, 10);
+                if(string.IsNullOrWhiteSpace(path))
+                    continue;
+                var dir = Path.Combine(packPath, path);
+                if(!Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+            }
+            //extract files
+            foreach (var file in files)
+            {
+                var path = Path.Combine(packPath, file.FullName.Remove(0, 10));
+                file.ExtractToFile(path);
+            }
         }
 
         /// <summary>
