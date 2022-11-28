@@ -29,5 +29,6 @@ Contains all Folders and Files for building and debugging the Desktop version of
 ## Resources
 ### Docs
 * [.NET](https://docs.microsoft.com/de-de/dotnet/)
+* [CurseForge API](https://docs.curseforge.com/)
 * [AvaloniaUI](https://docs.avaloniaui.net)
 
