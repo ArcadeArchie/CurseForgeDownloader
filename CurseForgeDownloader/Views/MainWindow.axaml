@@ -15,29 +15,34 @@
   <Window.Resources>
     <local:NullToEmptyStringConverter x:Key="NullToEmptyStringConverter"/>
   </Window.Resources>
-  <DockPanel>
-    <DockPanel DockPanel.Dock="Top">
-      <Button DockPanel.Dock="Right" Content="Select Manifest" Command="{Binding SelectManifestCmd}" CommandParameter="{Binding $parent[Window]}"/>
-      <TextBox IsReadOnly="True" Text="{Binding ManifestPath}"/>
+  <Grid>
+    <DockPanel ZIndex="4">
+      <DockPanel DockPanel.Dock="Top">
+        <Button DockPanel.Dock="Right" Content="Select Manifest" Command="{Binding SelectManifestCmd}" CommandParameter="{Binding $parent[Window]}"/>
+        <TextBox IsReadOnly="True" Text="{Binding ManifestPath}"/>
+      </DockPanel>
+      <DockPanel DockPanel.Dock="Top">
+        <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasManifest}">
+          <Label Content="Manifest Type:"/>
+          <Label Content="{Binding CurrentManifest.ManifestType}"/>
+          <Label Content="Name:"/>
+          <Label Content="{Binding CurrentManifest.Name}"/>
+          <Label Content="Version:"/>
+          <Label Content="{Binding CurrentManifest.Version}"/>
+          <Label Content="Author:"/>
+          <Label Content="{Binding CurrentManifest.Author}"/>
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" IsVisible="{Binding HasManifest}">
+          <Button Content="Create Modpack folder" Command="{Binding CreatePackFolderCmd}" CommandParameter="{Binding $parent[Window]}"/>
+          <Button Content="Just extract Mods" Command="{Binding ExtractModsCmd}" CommandParameter="{Binding $parent[Window]}"/>
+        </StackPanel>
+        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding !HasManifest}">
+          <TextBlock Text="Please select a manifest .json or Modpack .zip" IsVisible="{Binding !IsBusy}"/>
+        </Grid>
+      </DockPanel>
     </DockPanel>
-    <DockPanel DockPanel.Dock="Top">
-      <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasManifest}">
-        <Label Content="Manifest Type:"/>
-        <Label Content="{Binding CurrentManifest.ManifestType}"/>
-        <Label Content="Name:"/>
-        <Label Content="{Binding CurrentManifest.Name}"/>
-        <Label Content="Version:"/>
-        <Label Content="{Binding CurrentManifest.Version}"/>
-        <Label Content="Author:"/>
-        <Label Content="{Binding CurrentManifest.Author}"/>
-      </StackPanel>
-      <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" IsVisible="{Binding HasManifest}">
-        <Button Content="Create Modpack folder" Command="{Binding CreatePackFolderCmd}" CommandParameter="{Binding $parent[Window]}"/>
-        <Button Content="Just extract Mods" Command="{Binding ExtractModsCmd}" CommandParameter="{Binding $parent[Window]}"/>
-      </StackPanel>
-      <Grid HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding !HasManifest}">
-
-        <TextBlock Text="Please select a manifest .json or Modpack .zip" IsVisible="{Binding !IsBusy}"/>
+    <Panel ZIndex="5">
+      <Grid HorizontalAlignment="Center" VerticalAlignment="Center" RowDefinitions="*,*">
         <progRing:ProgressRing Width="80"
                                Height="80"
                                IsActive="{Binding IsBusy}"
@@ -45,7 +50,9 @@
                                VerticalAlignment="Center"
                                Foreground="Green"
                                Margin="10,20,0,0"/>
+        <Label Grid.Row="1" Content="{Binding StatusText}" IsVisible="{Binding IsBusy}" 
+               HorizontalAlignment="Center" VerticalAlignment="Center"/>
       </Grid>
-    </DockPanel>
-  </DockPanel>
+    </Panel>
+  </Grid>
 </Window>

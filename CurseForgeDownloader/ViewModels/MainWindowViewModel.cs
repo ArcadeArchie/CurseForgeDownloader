@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Threading;
 using Avalonia.X11;
 using CurseForgeDownloader.Models;
 using CurseForgeDownloader.Services;
@@ -58,22 +59,25 @@ namespace CurseForgeDownloader.ViewModels
         private async Task HandleExtractModsCmd(Window parent)
         {
             IsBusy = true;
+            StatusText = "Extracting Mods";
             var res = await FolderPicker.ShowAsync(parent);
-            if (res == null)
-                return;
-            await _manifestService!.ExtractMods(CurrentManifest, res);
+            if (res != null)
+            {
+                await _manifestService!.ExtractMods(CurrentManifest!, res);
+            }
             IsBusy = false;
         }
 
         private async Task HandleCreatePackFolderCmd(Window parent)
         {
             IsBusy = true;
+            StatusText = "Creating Modpack folder";
             var res = await FolderPicker.ShowAsync(parent);
-            if (res == null)
-                return;
-            await _manifestService!.CreatePack(CurrentManifest, res);
+            if (res != null)
+            {
+                await _manifestService!.CreatePack(CurrentManifest!, res);
+            }
             IsBusy = false;
-
         }
 
         private async Task ProcessManifest(string? path)
@@ -81,13 +85,17 @@ namespace CurseForgeDownloader.ViewModels
             if (string.IsNullOrEmpty(path)) return;
             CurrentManifest = null;
             IsBusy = true;
+            StatusText = "Proccessing Manifest";
             CurrentManifest = await _manifestService!.RetrieveManifest(path);
             IsBusy = false;
         }
 
         private async Task HandleSelectCmd(Window parent)
         {
+            IsBusy = true;
+            StatusText = "Choosing Manifest";
             var res = await FilePicker.ShowAsync(parent);
+            IsBusy = false;
             if (res == null)
                 return;
             ManifestPath = res[0];
