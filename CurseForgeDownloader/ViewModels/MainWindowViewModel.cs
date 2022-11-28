@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Reactive;
+using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -26,8 +27,8 @@ namespace CurseForgeDownloader.ViewModels
             {
                 new FileDialogFilter
                 {
-                    Extensions= new List<string> { "*.zip", "*.json" }
-                }
+                    Extensions = new List<string> { "json", "zip" }
+                },
             }
         };
         private static readonly OpenFolderDialog FolderPicker = new OpenFolderDialog
@@ -51,7 +52,12 @@ namespace CurseForgeDownloader.ViewModels
             _manifestService = Program.AppHost?.Services.GetRequiredService<CurseForgeManifestService>();
             SelectManifestCmd = ReactiveCommand.CreateFromTask<Window>(HandleSelectCmd, IsBusyObservable);
             ExtractModsCmd = ReactiveCommand.CreateFromTask<Window>(HandleExtractModsCmd, IsBusyObservable);
-            CreatePackFolderCmd = ReactiveCommand.CreateFromTask<Window>(HandleCreatePackFolderCmd, IsBusyObservable);
+            CreatePackFolderCmd = ReactiveCommand.CreateFromTask<Window>(HandleCreatePackFolderCmd, 
+                Observable.CombineLatest(
+                    IsBusyObservable, 
+                    this.WhenAny(x => x.CurrentManifest.FromZip, x => x.Value), 
+                    (isBusy, isZip) => isBusy && isZip));
+            
             this.WhenAnyValue(x => x.ManifestPath).Subscribe(async x => await ProcessManifest(x));
             this.WhenAnyValue(x => x.CurrentManifest).Subscribe(x => HasManifest = x != null);
         }
