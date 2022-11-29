@@ -24,6 +24,7 @@ namespace CurseForgeDownloader
             AppHost = Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostCtx, services) =>
                 {
+
                     services.AddHttpClient("CurseApi", httpClient =>
                     {
                         httpClient.BaseAddress = new Uri(APIConstants.BaseURL);
@@ -31,6 +32,7 @@ namespace CurseForgeDownloader
                     });
 
                     services
+                    .AddMediator()
                     .AddSingleton<CurseForgeManifestService>()
                     .AddSingleton<MainWindowViewModel>();
 
