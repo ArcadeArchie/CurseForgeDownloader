@@ -1,11 +1,10 @@
-## CurseForgeDownloader
+# CurseForgeDownloader
+> From this repository you can build the CurseForgeDownloader versions and modify them in any way you can imagine, and share your changes with others!
 
-Welcome to the CurseForgeDownloader source code!
-
-From this repository you can build the CurseForgeDownloader versions and modify them in any way you can imagine, and share your changes with others!
 ---
 [![CodeQL](https://github.com/ArcadeArchie/CurseForgeDownloader/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/ArcadeArchie/CurseForgeDownloader/actions/workflows/codeql.yml)
 ---
+
 Getting up and running
 ----------------------
 This Project is built using AvaloniaUI and .NET 6, so for building and developing the Project you'll need:
