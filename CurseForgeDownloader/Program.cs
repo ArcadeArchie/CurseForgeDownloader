@@ -1,11 +1,15 @@
 using Avalonia;
 using Avalonia.ReactiveUI;
+using CurseForgeDownloader.Messages;
 using CurseForgeDownloader.Services;
 using CurseForgeDownloader.ViewModels;
-using CurseForgeDownloader.Views;
+using Mediator;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace CurseForgeDownloader
@@ -22,13 +26,19 @@ namespace CurseForgeDownloader
         public static async Task Main(string[] args)
         {
             AppHost = Host.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((configBuilder) =>
+                {
+                    configBuilder.Sources.Clear();
+                    configBuilder
+                        .AddJsonFile("appsettings.json", false)
+                        .SetFileLoadExceptionHandler(HandleConfigLoadErr);
+                })
                 .ConfigureServices((hostCtx, services) =>
                 {
 
                     services.AddHttpClient("CurseApi", httpClient =>
                     {
                         httpClient.BaseAddress = new Uri(APIConstants.BaseURL);
-                        httpClient.DefaultRequestHeaders.Add(APIConstants.APIKey, APIConstants.APIKeyValue);
                     });
 
                     services
@@ -44,6 +54,16 @@ namespace CurseForgeDownloader
             AppHost.Services.GetRequiredService<AppBuilder>().StartWithClassicDesktopLifetime(args);
 
             await AppHost.StopAsync();
+        }
+
+        private static void HandleConfigLoadErr(FileLoadExceptionContext context)
+        {
+            if (context.Exception.GetType() != typeof(FileNotFoundException))
+                return;
+            context.Ignore = true;
+            using var cfg = File.Create("appsettings.json");
+            using var sr = new StreamWriter(cfg);
+            sr.Write(JsonSerializer.Serialize(new { }));
         }
 
         // Avalonia configuration, don't remove; also used by visual designer.
