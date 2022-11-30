@@ -10,7 +10,6 @@ namespace CurseForgeDownloader
     {
         internal const string APIKey = "x-api-key";
         //TODO: get users API key from UI and not depend on constant
-        internal const string APIKeyValue = "**************";
         internal const string BaseURL = "https://api.curseforge.com";
     }
 }

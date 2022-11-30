@@ -1,5 +1,6 @@
 ﻿using CurseForgeDownloader.Exceptions;
 using CurseForgeDownloader.Models;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
 using System.IO.Compression;
@@ -15,10 +16,12 @@ namespace CurseForgeDownloader.Services
     internal class CurseForgeManifestService
     {
         private readonly HttpClient _httpClient;
+        private readonly IConfiguration _config;
 
-        public CurseForgeManifestService(IHttpClientFactory httpClientFactory)
+        public CurseForgeManifestService(IHttpClientFactory httpClientFactory, IConfiguration config)
         {
             _httpClient = httpClientFactory.CreateClient("CurseApi");
+            _config = config;
         }
 
         /// <summary>
@@ -96,6 +99,8 @@ namespace CurseForgeDownloader.Services
             if (currentManifest.Files == null)
                 throw new InvalidOperationException("There are no files to download");
 
+            _httpClient.DefaultRequestHeaders.Remove(APIConstants.APIKey);
+            _httpClient.DefaultRequestHeaders.Add(APIConstants.APIKey, _config["ApiKey"]);
             //retieve download URLs from API
             var res = await _httpClient.PostAsJsonAsync("/v1/mods/files", new CurseFilesRequest
             {

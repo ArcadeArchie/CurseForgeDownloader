@@ -4,6 +4,7 @@ using Avalonia.X11;
 using CurseForgeDownloader.Models;
 using CurseForgeDownloader.Services;
 using DynamicData.Binding;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -36,7 +37,9 @@ namespace CurseForgeDownloader.ViewModels
             Title = "Select Output directory"
         };
         private readonly CurseForgeManifestService? _manifestService;
-
+        private readonly DebounceDispatcher _debounce = new DebounceDispatcher();
+        [Reactive]
+        public string? ApiKey { get; set; }
         [Reactive]
         public string? ManifestPath { get; set; }
         [Reactive]
@@ -51,15 +54,33 @@ namespace CurseForgeDownloader.ViewModels
         {
             _manifestService = Program.AppHost?.Services.GetRequiredService<CurseForgeManifestService>();
             SelectManifestCmd = ReactiveCommand.CreateFromTask<Window>(HandleSelectCmd, IsBusyObservable);
-            ExtractModsCmd = ReactiveCommand.CreateFromTask<Window>(HandleExtractModsCmd, IsBusyObservable);
-            CreatePackFolderCmd = ReactiveCommand.CreateFromTask<Window>(HandleCreatePackFolderCmd, 
+            ExtractModsCmd = ReactiveCommand.CreateFromTask<Window>(HandleExtractModsCmd,
+            Observable.CombineLatest(
+                IsBusyObservable,
+                this.WhenAnyValue(x => x.ApiKey),
+                (isBusy, key) => isBusy && !string.IsNullOrEmpty(key)));
+
+            CreatePackFolderCmd = ReactiveCommand.CreateFromTask<Window>(HandleCreatePackFolderCmd,
                 Observable.CombineLatest(
-                    IsBusyObservable, 
-                    this.WhenAny(x => x.CurrentManifest!.FromZip, x => x.Value), 
-                    (isBusy, isZip) => isBusy && isZip));
-            
+                    IsBusyObservable,
+                    this.WhenAnyValue(x => x.CurrentManifest!.FromZip),
+                    this.WhenAnyValue(x => x.ApiKey),
+                    (isBusy, isZip, key) => isBusy && isZip && !string.IsNullOrEmpty(key)));
+
             this.WhenAnyValue(x => x.ManifestPath).Subscribe(async x => await ProcessManifest(x));
             this.WhenAnyValue(x => x.CurrentManifest).Subscribe(x => HasManifest = x != null);
+
+            this.WhenPropertyChanged(x => x.ApiKey).Subscribe(x =>
+            {
+                //wait a bit before commiting to config
+                _debounce.Debounce(1500, e =>
+                {
+                    if (string.IsNullOrEmpty(e))
+                        return;
+                    var cfg = Program.AppHost!.Services.GetRequiredService<IConfiguration>();
+                    cfg["ApiKey"] = ApiKey;
+                }, ApiKey);
+            });
         }
 
         private async Task HandleExtractModsCmd(Window parent)

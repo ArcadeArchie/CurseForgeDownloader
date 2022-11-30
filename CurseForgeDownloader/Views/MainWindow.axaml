@@ -13,8 +13,12 @@
   </Design.DataContext>
   <Grid>
     <DockPanel ZIndex="4">
-      <DockPanel DockPanel.Dock="Top">
-        <Button DockPanel.Dock="Right" Content="Select Manifest" Command="{Binding SelectManifestCmd}" CommandParameter="{Binding $parent[Window]}"/>
+      <DockPanel DockPanel.Dock="Top" Margin="5">
+        <Button DockPanel.Dock="Right" Content="Select Manifest" 
+                Command="{Binding SelectManifestCmd}" CommandParameter="{Binding $parent[Window]}"/>
+        <TextBox DockPanel.Dock="Right" Watermark="API Key" 
+                 Margin="5 0 5 0" 
+                 MaxWidth="80" MinWidth="80" Text="{Binding ApiKey}"/>
         <TextBox IsReadOnly="True" Text="{Binding ManifestPath}"/>
       </DockPanel>
       <DockPanel DockPanel.Dock="Top">
