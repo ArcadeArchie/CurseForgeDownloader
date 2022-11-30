@@ -55,7 +55,7 @@ namespace CurseForgeDownloader.ViewModels
             CreatePackFolderCmd = ReactiveCommand.CreateFromTask<Window>(HandleCreatePackFolderCmd, 
                 Observable.CombineLatest(
                     IsBusyObservable, 
-                    this.WhenAny(x => x.CurrentManifest.FromZip, x => x.Value), 
+                    this.WhenAny(x => x.CurrentManifest!.FromZip, x => x.Value), 
                     (isBusy, isZip) => isBusy && isZip));
             
             this.WhenAnyValue(x => x.ManifestPath).Subscribe(async x => await ProcessManifest(x));
