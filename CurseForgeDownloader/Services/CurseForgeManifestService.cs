@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace CurseForgeDownloader.Services
 {
@@ -42,7 +43,7 @@ namespace CurseForgeDownloader.Services
 
             await ExtractMods(currentManifest, Path.Combine(packPath, "mods"));
             if (!currentManifest.FromZip) return;
-                        
+
             ExtractConfigs(currentManifest.FilePath, packPath);
         }
 
@@ -64,10 +65,10 @@ namespace CurseForgeDownloader.Services
             foreach (var folder in folders)
             {
                 var path = folder.FullName.Remove(0, 10);
-                if(string.IsNullOrWhiteSpace(path))
+                if (string.IsNullOrWhiteSpace(path))
                     continue;
                 var dir = Path.Combine(packPath, path);
-                if(!Directory.Exists(dir))
+                if (!Directory.Exists(dir))
                     Directory.CreateDirectory(dir);
             }
             //extract files
@@ -91,7 +92,7 @@ namespace CurseForgeDownloader.Services
             //Check if the output dir exists if not create it
             if (!Directory.Exists(outputPath))
                 Directory.CreateDirectory(outputPath);
-            
+
             if (currentManifest.Files == null)
                 throw new InvalidOperationException("There are no files to download");
 
@@ -99,27 +100,24 @@ namespace CurseForgeDownloader.Services
             var res = await _httpClient.PostAsJsonAsync("/v1/mods/files", new CurseFilesRequest
             {
                 FileIds = currentManifest.Files.Select(x => x.FileID)
-            }, options: new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
 
             //if no URLs were retreived throw and bail
             if (!res.IsSuccessStatusCode)
                 throw new DownloadFailedException("", "Failed to retrieve download URLs");
 
-            var files = await res.Content.ReadFromJsonAsync<CurseFilesResponse>(new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-            });
+            var files = await res.Content.ReadFromJsonAsync<CurseFilesResponse>();
 
             //loop thru the parsed response and download each file to output dir
-            foreach (var url in files!.Data.Select(x => (x.DownloadUrl, x.FileName)))
+            foreach (var curseFile in files!.Data)
             {
-                var file = await _httpClient.GetAsync(url.DownloadUrl);
+                string? url = curseFile.DownloadUrl;
+                if (string.IsNullOrEmpty(url))
+                    url = GuessDownloadUrl(curseFile);
+                var file = await _httpClient.GetAsync(url);
                 if (!file.IsSuccessStatusCode)
                     continue;
-                string jar = Path.Combine(outputPath, url.FileName);
+                string jar = Path.Combine(outputPath, curseFile.FileName);
                 //if we got duplicates delete the old one
                 if (File.Exists(jar))
                     File.Delete(jar);
@@ -127,7 +125,15 @@ namespace CurseForgeDownloader.Services
                 await file.Content.CopyToAsync(fs);
             }
         }
-        
+
+        private string GuessDownloadUrl(CurseFile curseFile)
+        {
+            var strId = curseFile.Id.ToString();
+            var part = strId.Substring(0, 4);
+            var part2 = strId.Substring(strId.Length - 3);
+            return $"https://mediafilez.forgecdn.net/files/{part}/{part2}/{HttpUtility.UrlEncode(curseFile.FileName)}";
+        }
+
         /// <summary>
         /// Parse a given manifest.json
         /// </summary>
@@ -147,10 +153,7 @@ namespace CurseForgeDownloader.Services
         /// <returns>Parsed Manifest</returns>
         private async Task<CurseForgeManifest?> RetrieveManifestFromJsonInternal(Stream jsonFile)
         {
-            return await JsonSerializer.DeserializeAsync<CurseForgeManifest>(jsonFile, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-            });
+            return await JsonSerializer.DeserializeAsync<CurseForgeManifest>(jsonFile);
         }
 
         /// <summary>
