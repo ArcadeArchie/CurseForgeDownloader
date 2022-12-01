@@ -3,7 +3,7 @@ using Avalonia.ReactiveUI;
 using CurseForgeDownloader.Messages;
 using CurseForgeDownloader.Services;
 using CurseForgeDownloader.ViewModels;
-using Mediator;
+using CurseForgeDownloader.Config;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -30,12 +30,25 @@ namespace CurseForgeDownloader
                 {
                     configBuilder.Sources.Clear();
                     configBuilder
-                        .AddJsonFile("appsettings.json", false)
+                        .Add<WritableJsonConfigSource>(s =>
+                        {
+                            s.Path = "appsettings.json";
+                            s.Optional = false;
+                            s.ResolveFileProvider();
+                        })
                         .SetFileLoadExceptionHandler(HandleConfigLoadErr);
                 })
                 .ConfigureServices((hostCtx, services) =>
                 {
-
+                    services.Configure<AppConfig>(hostCtx.Configuration).PostConfigure<AppConfig>(appConfig =>
+                    {
+                        appConfig.PropertyChanged += (sender, e) =>
+                        {
+                            if (e is not PropertyChangedEventArgsEx eventArgs)
+                                return;
+                            hostCtx.Configuration[eventArgs.PropertyName!] = eventArgs.Value?.ToString();
+                        };
+                    });
                     services.AddHttpClient("CurseApi", httpClient =>
                     {
                         httpClient.BaseAddress = new Uri(APIConstants.BaseURL);
