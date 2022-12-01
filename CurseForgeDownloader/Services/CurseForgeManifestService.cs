@@ -46,10 +46,9 @@ namespace CurseForgeDownloader.Services
         {
             var packPath = Path.Combine(outputPath, currentManifest.Name!);
 
-            await ExtractMods(currentManifest, Path.Combine(packPath, "mods"));
-            if (!currentManifest.FromZip) return;
-
             ExtractConfigs(currentManifest.FilePath, packPath);
+
+            await ExtractMods(currentManifest, Path.Combine(packPath, "mods"));
         }
 
         /// <summary>
@@ -79,8 +78,11 @@ namespace CurseForgeDownloader.Services
             //extract files
             foreach (var file in files)
             {
-                var path = Path.Combine(packPath, file.FullName.Remove(0, 10));
-                file.ExtractToFile(path);
+                string destFileName = Path.GetFullPath(Path.Combine(packPath, file.FullName.Remove(0, 10)));
+                string outputPath = Path.GetFullPath(packPath + Path.DirectorySeparatorChar);
+                if (!destFileName.StartsWith(outputPath))
+                    throw new InvalidOperationException("Entry outside of target directory");
+                file.ExtractToFile(destFileName);
             }
         }
 
