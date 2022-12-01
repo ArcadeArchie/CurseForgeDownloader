@@ -4,26 +4,26 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Themes.Fluent;
-using CurseForgeDownloader.ViewModels;
+using CurseForgeDownloader.Config;
 using CurseForgeDownloader.Views;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace CurseForgeDownloader
 {
     public partial class App : Application
     {
-        private readonly IConfiguration _config;
+        private readonly Config.AppConfig _config;
 
         public App()
         {
-            _config = Program.AppHost!.Services.GetRequiredService<IConfiguration>();
+            _config = Program.AppHost!.Services.GetRequiredService<IOptions<Config.AppConfig>>().Value;
         }
         public override void Initialize()
         {
-            var useDarkMode = _config.GetValue<bool>("EnableDarkMode");
-            DataContext = useDarkMode ? FluentThemeMode.Dark : FluentThemeMode.Light;
-            if (useDarkMode)
+            DataContext = _config.EnableDarkMode ? FluentThemeMode.Dark : FluentThemeMode.Light;
+            if (_config.EnableDarkMode)
                 Resources.Add("SystemControlBackgroundAltHighBrush", SolidColorBrush.Parse("#262626"));
             AvaloniaXamlLoader.Load(this);
         }

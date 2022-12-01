@@ -6,6 +6,7 @@ using CurseForgeDownloader.Services;
 using DynamicData.Binding;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System;
@@ -37,7 +38,11 @@ namespace CurseForgeDownloader.ViewModels
             Title = "Select Output directory"
         };
         private readonly CurseForgeManifestService? _manifestService;
+        private readonly Config.AppConfig? _config;
         private readonly DebounceDispatcher _debounce = new DebounceDispatcher();
+
+        #region Properties
+
         [Reactive]
         public string? ApiKey { get; set; }
         [Reactive]
@@ -46,26 +51,18 @@ namespace CurseForgeDownloader.ViewModels
         public CurseForgeManifest? CurrentManifest { get; set; }
         [Reactive]
         public bool HasManifest { get; set; }
-        public ReactiveCommand<Window, Unit> SelectManifestCmd { get; init; }
-        public ReactiveCommand<Window, Unit> ExtractModsCmd { get; init; }
-        public ReactiveCommand<Window, Unit> CreatePackFolderCmd { get; init; }
+        public ReactiveCommand<Window, Unit>? SelectManifestCmd { get; private set; }
+        public ReactiveCommand<Window, Unit>? ExtractModsCmd { get; private set; }
+        public ReactiveCommand<Window, Unit>? CreatePackFolderCmd { get; private set; }
+
+        #endregion
 
         public MainWindowViewModel()
         {
             _manifestService = Program.AppHost?.Services.GetRequiredService<CurseForgeManifestService>();
-            SelectManifestCmd = ReactiveCommand.CreateFromTask<Window>(HandleSelectCmd, IsBusyObservable);
-            ExtractModsCmd = ReactiveCommand.CreateFromTask<Window>(HandleExtractModsCmd,
-            Observable.CombineLatest(
-                IsBusyObservable,
-                this.WhenAnyValue(x => x.ApiKey),
-                (isBusy, key) => isBusy && !string.IsNullOrEmpty(key)));
-
-            CreatePackFolderCmd = ReactiveCommand.CreateFromTask<Window>(HandleCreatePackFolderCmd,
-                Observable.CombineLatest(
-                    IsBusyObservable,
-                    this.WhenAnyValue(x => x.CurrentManifest!.FromZip),
-                    this.WhenAnyValue(x => x.ApiKey),
-                    (isBusy, isZip, key) => isBusy && isZip && !string.IsNullOrEmpty(key)));
+            _config = Program.AppHost?.Services.GetRequiredService<IOptions<Config.AppConfig>>().Value;
+            ApiKey = _config?.ApiKey;
+            CreateCommands();
 
             this.WhenAnyValue(x => x.ManifestPath).Subscribe(async x => await ProcessManifest(x));
             this.WhenAnyValue(x => x.CurrentManifest).Subscribe(x => HasManifest = x != null);
@@ -75,12 +72,21 @@ namespace CurseForgeDownloader.ViewModels
                 //wait a bit before commiting to config
                 _debounce.Debounce(1500, e =>
                 {
-                    if (string.IsNullOrEmpty(e))
+                    if (string.IsNullOrEmpty(e) || ApiKey == e)
                         return;
-                    var cfg = Program.AppHost!.Services.GetRequiredService<IConfiguration>();
-                    cfg["ApiKey"] = ApiKey;
+                    _config!.ApiKey = e;
                 }, ApiKey);
             });
+        }
+
+        private void CreateCommands()
+        {
+            var requireApiKey = Observable.CombineLatest(IsBusyObservable, this.WhenAnyValue(x => x.ApiKey), (isBusy, key) => isBusy && !string.IsNullOrEmpty(key));
+            var requireKeyAndFromZip = Observable.CombineLatest(requireApiKey, this.WhenAnyValue(x => x.CurrentManifest!.FromZip), (isBusy, isZip) => isBusy && isZip);
+
+            SelectManifestCmd = ReactiveCommand.CreateFromTask<Window>(HandleSelectCmd, IsBusyObservable);
+            ExtractModsCmd = ReactiveCommand.CreateFromTask<Window>(HandleExtractModsCmd, requireApiKey);
+            CreatePackFolderCmd = ReactiveCommand.CreateFromTask<Window>(HandleCreatePackFolderCmd, requireKeyAndFromZip);
         }
 
         private async Task HandleExtractModsCmd(Window parent)
@@ -127,8 +133,5 @@ namespace CurseForgeDownloader.ViewModels
                 return;
             ManifestPath = res[0];
         }
-
-
-
     }
 }
