@@ -13,21 +13,21 @@ namespace CurseForgeDownloader.Models
 
         [JsonPropertyName("name")]
         public string? Name { get; set; }
-        
+
         [JsonPropertyName("version")]
         public string? Version { get; set; }
-        
+
         [JsonPropertyName("manifestType")]
         public string? ManifestType { get; set; }
-        
+
         [JsonPropertyName("author")]
         public string? Author { get; set; }
 
         [JsonPropertyName("minecraft")]
         public MinecraftType? Minecraft { get; set; }
-        
+
         [JsonPropertyName("files")]
-        public IEnumerable<ModFile>? Files { get; set; }
+        public IEnumerable<CurseManifestFile>? Files { get; set; }
     }
 
     public class MinecraftType
@@ -47,7 +47,8 @@ namespace CurseForgeDownloader.Models
         [JsonPropertyName("primary")]
         public bool Primary { get; set; }
     }
-    public class ModFile
+
+    public class CurseManifestFile
     {
         [JsonPropertyName("projectID")]
         public int ProjectID { get; set; }
@@ -58,4 +59,5 @@ namespace CurseForgeDownloader.Models
         [JsonPropertyName("required")]
         public bool Required { get; set; }
     }
+
 }
