@@ -20,14 +20,18 @@ internal class WritableJsonConfigProvider<TConfig> : JsonConfigurationProvider w
     {
         base.Set(key, value);
         var fullPath = base.Source.FileProvider!.GetFileInfo(base.Source.Path!).PhysicalPath;
+        if (string.IsNullOrEmpty(fullPath))
+            return;
         string json = File.ReadAllText(fullPath);
 
         var jsonObj = JsonSerializer.Deserialize<TConfig>(json);
-        if (jsonObj == null)
-            jsonObj = new TConfig();
+        jsonObj ??= new TConfig();
 
         var prop = _modelProperties.FirstOrDefault(x => x.Name.Contains(key));
-        prop.SetValue(jsonObj, value);
-        File.WriteAllText(fullPath, JsonSerializer.Serialize(jsonObj));
+        if (prop != null)
+        {
+            prop.SetValue(jsonObj, value);
+            File.WriteAllText(fullPath!, JsonSerializer.Serialize(jsonObj));
+        }
     }
 }

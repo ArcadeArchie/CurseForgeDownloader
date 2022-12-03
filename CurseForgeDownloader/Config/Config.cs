@@ -38,7 +38,7 @@ internal class AppConfig : INotifyPropertyChanged
 }
 public class PropertyChangedEventArgsEx : PropertyChangedEventArgs
 {
-    private object? _value;
+    private readonly object? _value;
 
     public virtual object? Value => _value;
 
