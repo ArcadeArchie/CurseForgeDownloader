@@ -21,7 +21,7 @@ namespace CurseForgeDownloader.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        private static readonly OpenFileDialog FilePicker = new OpenFileDialog
+        private static readonly OpenFileDialog FilePicker = new()
         {
             Title = "Select Manifest JSON or Modpack zip",
             AllowMultiple = false,
@@ -33,13 +33,13 @@ namespace CurseForgeDownloader.ViewModels
                 },
             }
         };
-        private static readonly OpenFolderDialog FolderPicker = new OpenFolderDialog
+        private static readonly OpenFolderDialog FolderPicker = new()
         {
             Title = "Select Output directory"
         };
         private readonly CurseForgeManifestService? _manifestService;
         private readonly Config.AppConfig? _config;
-        private readonly DebounceDispatcher _debounce = new DebounceDispatcher();
+        private readonly DebounceDispatcher _debounce = new();
 
         #region Properties
 

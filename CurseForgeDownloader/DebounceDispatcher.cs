@@ -7,7 +7,7 @@ namespace CurseForgeDownloader;
 internal class DebounceDispatcher
 {
     private DispatcherTimer? timer;
-    private DateTime timerStarted { get; set; } = DateTime.UtcNow.AddYears(-1);
+    // private DateTime timerStarted { get; set; } = DateTime.UtcNow.AddYears(-1);
 
 
     public void Debounce<TParam>(int interval, Action<TParam?> action,
