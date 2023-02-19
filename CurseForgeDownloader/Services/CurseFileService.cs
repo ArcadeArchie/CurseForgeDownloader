@@ -28,13 +28,13 @@ internal class CurseFileService
     {
         _httpClient.DefaultRequestHeaders.Remove(APIConstants.APIKey);
         _httpClient.DefaultRequestHeaders.Add(APIConstants.APIKey, _config.Value.ApiKey);
-        //retieve download URLs from API
+        //retrieve download URLs from API
         var res = await _httpClient.PostAsJsonAsync("/v1/mods/files", new CurseFilesRequest
         {
             FileIds = files.Select(x => x.FileID)
         });
 
-        //if no URLs were retreived throw and bail
+        //if no URLs were retrieved throw and bail
         if (!res.IsSuccessStatusCode)
             throw new DownloadFailedException("", "Failed to retrieve download URLs");
 
