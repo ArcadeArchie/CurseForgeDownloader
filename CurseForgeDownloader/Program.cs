@@ -11,6 +11,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 
 namespace CurseForgeDownloader
 {
@@ -49,8 +50,10 @@ namespace CurseForgeDownloader
                             hostCtx.Configuration[eventArgs.PropertyName!] = eventArgs.Value?.ToString();
                         };
                     });
-                    services.AddHttpClient("CurseApi", httpClient =>
+                    services.AddHttpClient("CurseApi", (svc, httpClient) =>
                     {
+                        var cfg = svc.GetRequiredService<IOptions<AppConfig>>();
+                        httpClient.DefaultRequestHeaders.Add(APIConstants.APIKey, cfg.Value.ApiKey);
                         httpClient.BaseAddress = new Uri(APIConstants.BaseURL);
                     });
 

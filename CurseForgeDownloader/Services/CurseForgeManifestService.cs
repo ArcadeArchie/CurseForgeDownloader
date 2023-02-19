@@ -20,10 +20,10 @@ namespace CurseForgeDownloader.Services
         private readonly CurseFileService _curseFileService;
         private readonly HttpClient _httpClient;
 
-        public CurseForgeManifestService(IHttpClientFactory httpClientFactory, IOptions<AppConfig> config)
+        public CurseForgeManifestService(IHttpClientFactory httpClientFactory)
         {
             _httpClient = httpClientFactory.CreateClient("CurseApi");
-            _curseFileService = new(_httpClient, config);
+            _curseFileService = new(_httpClient);
         }
 
         #region Methods

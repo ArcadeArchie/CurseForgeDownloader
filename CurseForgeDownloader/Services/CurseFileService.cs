@@ -16,18 +16,14 @@ namespace CurseForgeDownloader.Services;
 internal class CurseFileService
 {
     private readonly HttpClient _httpClient;
-    private readonly IOptions<AppConfig> _config;
-    public CurseFileService(HttpClient httpClient, IOptions<AppConfig> config)
+    public CurseFileService(HttpClient httpClient)
     {
         _httpClient = httpClient;
-        _config = config;
     }
 
 
     internal async Task<IEnumerable<CurseFile>> GetFilesAsync(IEnumerable<CurseManifestFile> files)
     {
-        _httpClient.DefaultRequestHeaders.Remove(APIConstants.APIKey);
-        _httpClient.DefaultRequestHeaders.Add(APIConstants.APIKey, _config.Value.ApiKey);
         //retrieve download URLs from API
         var res = await _httpClient.PostAsJsonAsync("/v1/mods/files", new CurseFilesRequest
         {
