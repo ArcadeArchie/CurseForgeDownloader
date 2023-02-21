@@ -1,10 +1,14 @@
+using Avalonia.Notification;
 using Avalonia.Threading;
+using CurseForgeDownloader.Messages;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Reactive.Linq;
-using System.Text;
+using System.Threading.Tasks;
+using System.Threading;
+using Mediator;
 
 namespace CurseForgeDownloader.ViewModels
 {
@@ -28,8 +32,8 @@ namespace CurseForgeDownloader.ViewModels
         public string? StatusText { get; set; }
         [Reactive]
         public bool IsBusy { get; set; }
-        public bool HasError { get; set; }
-
+        public bool HasError { get; set; }        
+        public INotificationMessageManager Notifications { get; } = new NotificationMessageManager();
 
         protected ViewModelBase()
         {
@@ -39,6 +43,22 @@ namespace CurseForgeDownloader.ViewModels
                 if (isBusy)
                     StatusText = null;
             });
+        }
+
+
+        protected void CreateErrorNotification(IList<string> errors)
+        {
+            var msg = Notifications
+                        .CreateMessage()
+                        .Accent("#f55b65")
+                        .Animates(true)
+                        .Background("#727272")
+                        .HasBadge("Error");
+            foreach (var error in errors) { msg.HasMessage(error); }
+            msg
+                .Dismiss().WithButton("Close", btn => { })
+                .Dismiss().WithDelay(TimeSpan.FromSeconds(10));
+            Dispatcher.UIThread.Post(() => msg.Queue(), DispatcherPriority.Normal);
         }
     }
 }

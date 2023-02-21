@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -29,6 +30,9 @@ internal class CurseFileService
         {
             FileIds = files.Select(x => x.FileID)
         });
+
+        if(res.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            throw new InvalidOperationException("Recieved forbidden response, API may be invalid");
 
         //if no URLs were retrieved throw and bail
         if (!res.IsSuccessStatusCode)

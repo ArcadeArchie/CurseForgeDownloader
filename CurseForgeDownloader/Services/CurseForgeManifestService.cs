@@ -1,6 +1,8 @@
 ﻿using CurseForgeDownloader.Config;
 using CurseForgeDownloader.Exceptions;
+using CurseForgeDownloader.Messages;
 using CurseForgeDownloader.Models;
+using Mediator;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using System;
@@ -19,11 +21,13 @@ namespace CurseForgeDownloader.Services
     {
         private readonly CurseFileService _curseFileService;
         private readonly HttpClient _httpClient;
+        private readonly IMediator _mediator;
 
-        public CurseForgeManifestService(IHttpClientFactory httpClientFactory)
+        public CurseForgeManifestService(IHttpClientFactory httpClientFactory, IMediator mediator)
         {
             _httpClient = httpClientFactory.CreateClient("CurseApi");
             _curseFileService = new(_httpClient);
+            _mediator = mediator;
         }
 
         #region Methods
@@ -37,7 +41,7 @@ namespace CurseForgeDownloader.Services
         {
             var manifest = path.EndsWith(".zip") ? await RetrieveManifestFromZip(path) : await RetrieveManifestFromJson(path);
 
-            if(retrievModInfos)
+            if (retrievModInfos)
             {
                 //TODO: load mod info
             }
@@ -58,7 +62,7 @@ namespace CurseForgeDownloader.Services
 
             await ExtractMods(currentManifest, Path.Combine(packPath, "mods"));
         }
-        
+
         /// <summary>
         /// Download all mods from the given Manifest instance to the output directory
         /// </summary>
@@ -69,22 +73,31 @@ namespace CurseForgeDownloader.Services
         /// <exception cref="DownloadFailedException">Failed to retrieve download URls from CurseForge API</exception>
         internal async Task ExtractMods(CurseForgeManifest currentManifest, string outputPath)
         {
-            //Check if the output dir exists if not create it
-            if (!Directory.Exists(outputPath))
-                Directory.CreateDirectory(outputPath);
-
-            if (currentManifest.Files == null)
-                throw new InvalidOperationException("There are no files to download");
-
-            var files = await _curseFileService.GetFilesAsync(currentManifest.Files);
-
-            //loop thru the parsed response and download each file to output dir
-            foreach (var curseFile in files)
+            try
             {
-                await _curseFileService.DownloadFileAsync(curseFile, outputPath);
+                if (currentManifest.Files == null)
+                    throw new InvalidOperationException("There are no files to download");
+
+
+                //Check if the output dir exists if not create it
+                if (!Directory.Exists(outputPath))
+                    Directory.CreateDirectory(outputPath);
+
+                var files = await _curseFileService.GetFilesAsync(currentManifest.Files);
+
+
+                //loop thru the parsed response and download each file to output dir
+                foreach (var curseFile in files)
+                {
+                    await _curseFileService.DownloadFileAsync(curseFile, outputPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                await _mediator.Publish(new CurseForgeErrorMessage(null, ex));
             }
         }
-        
+
         #region Util
 
         /// <summary>
@@ -135,7 +148,7 @@ namespace CurseForgeDownloader.Services
 
             return res;
         }
-    
+
         /// <summary>
         /// Extract configs from Modpack zip
         /// </summary>

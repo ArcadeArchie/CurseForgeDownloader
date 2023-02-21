@@ -1,25 +1,23 @@
 using Avalonia.Controls;
-using Avalonia.Threading;
-using Avalonia.X11;
+using CurseForgeDownloader.Messages;
 using CurseForgeDownloader.Models;
 using CurseForgeDownloader.Services;
 using DynamicData.Binding;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
+using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CurseForgeDownloader.ViewModels
 {
-    public class MainWindowViewModel : ViewModelBase
+    public class MainWindowViewModel : ViewModelBase, Mediator.INotificationHandler<CurseForgeErrorMessage>
     {
         private static readonly OpenFileDialog FilePicker = new()
         {
@@ -132,6 +130,14 @@ namespace CurseForgeDownloader.ViewModels
             if (res == null)
                 return;
             ManifestPath = res[0];
+        }
+               
+
+
+        public ValueTask Handle(CurseForgeErrorMessage notification, CancellationToken cancellationToken)
+        {
+            CreateErrorNotification(notification.Exceptions.Select(x => x.Message).ToArray());
+            return ValueTask.CompletedTask;
         }
     }
 }

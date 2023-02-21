@@ -1,17 +1,21 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
+using Avalonia.Threading;
 using Mediator;
 
 
 namespace CurseForgeDownloader.Messages;
 
-public class UnhandledErrorMessage : INotification
+public class CurseForgeErrorMessage : INotification
 {
-    public Exception Exception { get; init; }
+    public Exception[] Exceptions { get; init; }
     public string? Caller { get; init; }
-    public UnhandledErrorMessage(Exception exception, [CallerMemberName] string? callsite = null)
+    public CurseForgeErrorMessage([CallerMemberName] string? callsite = null, params Exception[] exceptions)
     {
-        Exception = exception;
+        Exceptions = exceptions;
         Caller = callsite;
     }
 }

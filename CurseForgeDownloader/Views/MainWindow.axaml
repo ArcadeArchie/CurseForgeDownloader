@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:progRing="clr-namespace:AvaloniaProgressRing;assembly=AvaloniaProgressRing"
+        xmlns:controls="clr-namespace:Avalonia.Notification.Controls;assembly=Notification.Avalonia"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="CurseForgeDownloader.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
@@ -12,12 +13,13 @@
     <vm:MainWindowViewModel/>
   </Design.DataContext>
   <Grid>
+    <controls:NotificationMessageContainer ZIndex="5" Manager="{Binding Notifications}" Margin="5,5,5,5"/>
     <DockPanel ZIndex="4">
       <DockPanel DockPanel.Dock="Top" Margin="5">
-        <Button DockPanel.Dock="Right" Content="Select Manifest" 
+        <Button DockPanel.Dock="Right" Content="Select Manifest"
                 Command="{Binding SelectManifestCmd}" CommandParameter="{Binding $parent[Window]}"/>
-        <TextBox DockPanel.Dock="Right" Watermark="API Key" 
-                 Margin="5 0 5 0" 
+        <TextBox DockPanel.Dock="Right" Watermark="API Key"
+                 Margin="5 0 5 0"
                  MaxWidth="80" MinWidth="80" Text="{Binding ApiKey}"/>
         <TextBox IsReadOnly="True" Text="{Binding ManifestPath}"/>
       </DockPanel>
@@ -50,7 +52,7 @@
                                VerticalAlignment="Center"
                                Foreground="Green"
                                Margin="10,20,0,0"/>
-        <Label Grid.Row="1" Content="{Binding StatusText}" IsVisible="{Binding IsBusy}" 
+        <Label Grid.Row="1" Content="{Binding StatusText}" IsVisible="{Binding IsBusy}"
                HorizontalAlignment="Center" VerticalAlignment="Center"/>
       </Grid>
     </Panel>
