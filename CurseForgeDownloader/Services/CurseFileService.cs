@@ -13,7 +13,9 @@ using Microsoft.Extensions.Options;
 
 namespace CurseForgeDownloader.Services;
 
-
+/// <summary>
+/// Helper Service for interacting with the CurseForge API for file downloads and info
+/// </summary>
 internal class CurseFileService
 {
     private readonly HttpClient _httpClient;
@@ -22,7 +24,11 @@ internal class CurseFileService
         _httpClient = httpClient;
     }
 
-
+    /// <summary>
+    /// Retrieve Mod File info from the CurseForge API for a given set of <see cref="CurseManifestFile"/>
+    /// </summary>
+    /// <param name="files">Set of file IDs to send to the API</param>
+    /// <exception cref="DownloadFailedException">Failed to retrieve file infos from API</exception>
     internal async Task<IEnumerable<CurseFile>> GetFilesAsync(IEnumerable<CurseManifestFile> files)
     {
         //retrieve download URLs from API
@@ -42,11 +48,16 @@ internal class CurseFileService
 
         return data!.Data;
     }
-
+    
+    /// <summary>
+    /// Download a Mod file to given folder path
+    /// </summary>
+    /// <param name="curseFile">Info about the mod file</param>
+    /// <param name="outputPath">output folder path</param>
     internal async Task DownloadFileAsync(CurseFile curseFile, string outputPath)
     {
         string? url = curseFile.DownloadUrl;
-        if (string.IsNullOrEmpty(url))
+        if (string.IsNullOrEmpty(url)) // build direct url if the api response didnt give us one
             url = GetDownloadUrl(curseFile);
         var file = await _httpClient.GetAsync(url);
         if (!file.IsSuccessStatusCode)
@@ -64,6 +75,7 @@ internal class CurseFileService
     /// </summary>
     /// <param name="curseFile"></param>
     /// <returns>Direct download URL as a string</returns>
+    /// <remarks>F U CurseForge</remarks>
     private static string GetDownloadUrl(CurseFile curseFile)
     {
         var strId = curseFile.Id.ToString();

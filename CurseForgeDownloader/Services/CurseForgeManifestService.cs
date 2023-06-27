@@ -17,6 +17,9 @@ using System.Web;
 
 namespace CurseForgeDownloader.Services
 {
+    /// <summary>
+    /// Helper service for working with a CurseForge Modpack manifest file
+    /// </summary>
     internal class CurseForgeManifestService
     {
         private readonly CurseFileService _curseFileService;
