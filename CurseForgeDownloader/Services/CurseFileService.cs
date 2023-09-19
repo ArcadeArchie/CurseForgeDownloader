@@ -38,7 +38,7 @@ internal class CurseFileService
         });
 
         if(res.StatusCode == System.Net.HttpStatusCode.Forbidden)
-            throw new InvalidOperationException("Recieved forbidden response, API may be invalid");
+            throw new InvalidOperationException("Recieved forbidden response, API key may be invalid");
 
         //if no URLs were retrieved throw and bail
         if (!res.IsSuccessStatusCode)

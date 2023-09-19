@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using CurseForgeDownloader.Messages;
 using CurseForgeDownloader.Models;
 using CurseForgeDownloader.Services;
@@ -19,21 +20,24 @@ namespace CurseForgeDownloader.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase, Mediator.INotificationHandler<CurseForgeErrorMessage>
     {
-        private static readonly OpenFileDialog FilePicker = new()
+        private static readonly FilePickerOpenOptions FilePicker = new()
         {
             Title = "Select Manifest JSON or Modpack zip",
             AllowMultiple = false,
-            Filters = new List<FileDialogFilter>
+
+            FileTypeFilter = new List<FilePickerFileType>
             {
-                new FileDialogFilter
+                new("CurseForge modepack files")
                 {
-                    Extensions = new List<string> { "json", "zip" }
-                },
+                    Patterns = new [] { "*.json",  "*.zip"  },
+                    MimeTypes = new[] { "application/json", "application/zip" }
+                }
             }
         };
-        private static readonly OpenFolderDialog FolderPicker = new()
+        private static readonly FolderPickerOpenOptions FolderPicker = new()
         {
-            Title = "Select Output directory"
+            Title = "Select Output directory",
+            AllowMultiple = false
         };
         private readonly CurseForgeManifestService? _manifestService;
         private readonly Config.AppConfig? _config;
@@ -91,10 +95,14 @@ namespace CurseForgeDownloader.ViewModels
         {
             IsBusy = true;
             StatusText = "Extracting Mods";
-            var res = await FolderPicker.ShowAsync(parent);
-            if (res != null)
+            var res = await parent.StorageProvider.OpenFolderPickerAsync(FolderPicker);
+            if (res is not null && res.Any())
             {
-                await _manifestService!.ExtractMods(CurrentManifest!, res);
+                var folder = res[0];
+                if (folder is not null)
+                {
+                    await _manifestService!.ExtractMods(CurrentManifest!, folder.Path.AbsolutePath);
+                }
             }
             IsBusy = false;
         }
@@ -103,10 +111,17 @@ namespace CurseForgeDownloader.ViewModels
         {
             IsBusy = true;
             StatusText = "Creating Modpack folder";
-            var res = await FolderPicker.ShowAsync(parent);
-            if (res != null)
+            var res = await parent.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
-                await _manifestService!.CreatePack(CurrentManifest!, res);
+                Title = "Select a Extract location"
+            });
+            if (res is not null && res.Any())
+            {
+                var file = res[0];
+                if (file is not null)
+                {
+                    await _manifestService!.CreatePack(CurrentManifest!, file.Path.AbsolutePath);
+                }
             }
             IsBusy = false;
         }
@@ -125,13 +140,17 @@ namespace CurseForgeDownloader.ViewModels
         {
             IsBusy = true;
             StatusText = "Choosing Manifest";
-            var res = await FilePicker.ShowAsync(parent);
+            var res = await parent.StorageProvider.OpenFilePickerAsync(FilePicker);
             IsBusy = false;
-            if (res == null)
+
+            if (res is null || !res.Any())
                 return;
-            ManifestPath = res[0];
+            var file = res[0];
+            if (file is null)
+                return;
+            ManifestPath = file.Path.AbsolutePath;
         }
-               
+
 
 
         public ValueTask Handle(CurseForgeErrorMessage notification, CancellationToken cancellationToken)
