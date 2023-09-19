@@ -162,20 +162,20 @@ namespace CurseForgeDownloader.Services
             using var zipFile = File.OpenRead(zipPath);
             using var archive = new ZipArchive(zipFile, ZipArchiveMode.Read);
             //get all folders
-            var folders = archive.Entries.Where(x => string.IsNullOrWhiteSpace(x.Name));
+            //var folders = archive.Entries.Where(x => string.IsNullOrWhiteSpace(x.Name));
             //get all files except manifest and modlist
             var files = archive.Entries.Where(x => !string.IsNullOrWhiteSpace(x.Name) && x.Name != "manifest.json" && x.Name != "modlist.html");
 
-            //create folders
-            foreach (var folder in folders)
-            {
-                var path = folder.FullName.Remove(0, 10);
-                if (string.IsNullOrWhiteSpace(path))
-                    continue;
-                var dir = Path.Combine(packPath, path);
-                if (!Directory.Exists(dir))
-                    Directory.CreateDirectory(dir);
-            }
+            ////create folders
+            //foreach (var folder in folders)
+            //{
+            //    var path = folder.FullName.Remove(0, 10);
+            //    if (string.IsNullOrWhiteSpace(path))
+            //        continue;
+            //    var dir = Path.Combine(packPath, path);
+            //    if (!Directory.Exists(dir))
+            //        Directory.CreateDirectory(dir);
+            //}
             //extract files
             foreach (var file in files)
             {
@@ -183,6 +183,8 @@ namespace CurseForgeDownloader.Services
                 string outputPath = Path.GetFullPath(packPath + Path.DirectorySeparatorChar);
                 if (!destFileName.StartsWith(outputPath))
                     throw new InvalidOperationException("Entry outside of target directory");
+                if(!Directory.Exists(Path.GetDirectoryName(destFileName)))
+                    Directory.CreateDirectory(Path.GetDirectoryName(destFileName));
                 file.ExtractToFile(destFileName);
             }
         }
