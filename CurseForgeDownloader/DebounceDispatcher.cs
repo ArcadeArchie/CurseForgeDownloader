@@ -12,8 +12,10 @@ internal class DebounceDispatcher
 
     public void Debounce<TParam>(int interval, Action<TParam?> action,
         TParam? param = null,
-        DispatcherPriority priority = DispatcherPriority.ApplicationIdle) where TParam : class
+        DispatcherPriority? priority = null) where TParam : class
     {
+        priority ??= DispatcherPriority.ApplicationIdle;
+
         // kill pending timer and pending ticks
         timer?.Stop();
         timer = null;
@@ -21,7 +23,7 @@ internal class DebounceDispatcher
         // timer is recreated for each event and effectively
         // resets the timeout. Action only fires after timeout has fully
         // elapsed without other events firing in between
-        timer = new DispatcherTimer(TimeSpan.FromMilliseconds(interval), priority, (s, e) =>
+        timer = new DispatcherTimer(TimeSpan.FromMilliseconds(interval), priority.Value, (s, e) =>
         {
             if (timer == null)
                 return;
