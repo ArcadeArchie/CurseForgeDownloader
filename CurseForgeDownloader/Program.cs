@@ -35,6 +35,7 @@ namespace CurseForgeDownloader
                         {
                             s.Path = "appsettings.json";
                             s.Optional = false;
+                            s.ReloadOnChange = true;
                             s.ResolveFileProvider();
                         })
                         .SetFileLoadExceptionHandler(HandleConfigLoadErr);
@@ -52,8 +53,8 @@ namespace CurseForgeDownloader
                     });
                     services.AddHttpClient("CurseApi", (svc, httpClient) =>
                     {
-                        var cfg = svc.GetRequiredService<IOptions<AppConfig>>();
-                        httpClient.DefaultRequestHeaders.Add(APIConstants.APIKey, cfg.Value.ApiKey);
+                        var cfg = svc.GetRequiredService<IOptionsMonitor<AppConfig>>();
+                        httpClient.DefaultRequestHeaders.Add(APIConstants.APIKey, cfg.CurrentValue.ApiKey);
                         httpClient.BaseAddress = new Uri(APIConstants.BaseURL);
                     });
 

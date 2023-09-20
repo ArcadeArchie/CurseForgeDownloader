@@ -40,7 +40,7 @@ namespace CurseForgeDownloader.ViewModels
             AllowMultiple = false
         };
         private readonly CurseForgeManifestService? _manifestService;
-        private readonly Config.AppConfig? _config;
+        private readonly IOptionsMonitor<Config.AppConfig>? _config;
         private readonly DebounceDispatcher _debounce = new();
 
         #region Properties
@@ -62,8 +62,8 @@ namespace CurseForgeDownloader.ViewModels
         public MainWindowViewModel()
         {
             _manifestService = Program.AppHost?.Services.GetRequiredService<CurseForgeManifestService>();
-            _config = Program.AppHost?.Services.GetRequiredService<IOptions<Config.AppConfig>>().Value;
-            ApiKey = _config?.ApiKey;
+            _config = Program.AppHost?.Services.GetRequiredService<IOptionsMonitor<Config.AppConfig>>();
+            ApiKey = _config?.CurrentValue.ApiKey;
             CreateCommands();
 
             this.WhenAnyValue(x => x.ManifestPath).Subscribe(async x => await ProcessManifest(x));
@@ -74,9 +74,9 @@ namespace CurseForgeDownloader.ViewModels
                 //wait a bit before commiting to config
                 _debounce.Debounce(1500, e =>
                 {
-                    if (string.IsNullOrEmpty(e) || ApiKey == e)
+                    if (string.IsNullOrEmpty(e) || _config?.CurrentValue.ApiKey == e)
                         return;
-                    _config!.ApiKey = e;
+                    _config!.CurrentValue.ApiKey = e;
                 }, ApiKey);
             });
         }

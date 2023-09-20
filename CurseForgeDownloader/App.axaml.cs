@@ -5,6 +5,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
+using Avalonia.Threading;
 using CurseForgeDownloader.Config;
 using CurseForgeDownloader.Views;
 using Microsoft.Extensions.Configuration;
@@ -15,23 +16,26 @@ namespace CurseForgeDownloader
 {
     public partial class App : Application
     {
-        private readonly Config.AppConfig _config;
+        private readonly IOptionsMonitor<AppConfig>? _config;
 
         public App()
         {
-            if (!Design.IsDesignMode)
-                _config = Program.AppHost!.Services.GetRequiredService<IOptions<Config.AppConfig>>().Value;
-            else
-                _config = new AppConfig
-                {
-                    EnableDarkMode = true,
-                };
+            _config = Program.AppHost?.Services.GetRequiredService<IOptionsMonitor<AppConfig>>();
+            _config?.OnChange((cfg, str) =>
+            {
+                Dispatcher.UIThread.Post(() =>
+                    RequestedThemeVariant = _config!.CurrentValue.EnableDarkMode ? ThemeVariant.Dark : ThemeVariant.Light
+                );
+            });
         }
         public override void Initialize()
         {
-            RequestedThemeVariant = _config.EnableDarkMode ? ThemeVariant.Dark : ThemeVariant.Light;
-            if (_config.EnableDarkMode)
-                Resources.Add("SystemControlBackgroundAltHighBrush", SolidColorBrush.Parse("#262626"));
+            if (!Design.IsDesignMode)
+            {
+                RequestedThemeVariant = _config!.CurrentValue.EnableDarkMode ? ThemeVariant.Dark : ThemeVariant.Light;
+                if (_config.CurrentValue.EnableDarkMode)
+                    Resources.Add("SystemControlBackgroundAltHighBrush", SolidColorBrush.Parse("#262626"));
+            }
             AvaloniaXamlLoader.Load(this);
         }
 
